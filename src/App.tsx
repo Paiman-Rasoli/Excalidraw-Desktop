@@ -1,12 +1,26 @@
 import "./App.css";
 import "@excalidraw/excalidraw/index.css";
-import { Excalidraw } from "@excalidraw/excalidraw";
+import { lazy, Suspense } from "react";
 
+const Excalidraw = lazy(() =>
+  import("@excalidraw/excalidraw").then((module) => ({
+    default: module.Excalidraw,
+  })),
+);
 
 function App() {
   return (
     <main className="container">
-      <Excalidraw />
+      <Suspense
+        fallback={
+          <div className="loading" role="status" aria-live="polite">
+            <div className="spinner" aria-hidden="true" />
+            <span>Loading Excalidraw…</span>
+          </div>
+        }
+      >
+        <Excalidraw />
+      </Suspense>
     </main>
   );
 }
