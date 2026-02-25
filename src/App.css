@@ -7,7 +7,70 @@
 .container {
   margin: 0;
   width: 100vw;
-  height: 100vh;
+  height: 80vh;
+  position: relative;
+}
+
+.library-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.library-modal {
+  width: min(1200px, 92vw);
+  height: min(840px, 88vh);
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.library-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.library-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.library-modal-open-browser {
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: #f8f8f8;
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.library-modal-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.library-modal-close {
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.library-modal-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .loading {
