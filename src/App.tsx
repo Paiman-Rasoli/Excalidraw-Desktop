@@ -2,7 +2,8 @@ import "./App.css";
 import "@excalidraw/excalidraw/index.css";
 import { lazy, Suspense, useState } from "react";
 import { Footer } from "@excalidraw/excalidraw";
-import { LibraryModal } from "./component/library-modal";
+import { LibraryModal } from "./components/library-modal";
+
 const Excalidraw = lazy(() =>
   import("@excalidraw/excalidraw").then((module) => ({
     default: module.Excalidraw,
