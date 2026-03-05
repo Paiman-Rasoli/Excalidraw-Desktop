@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import "./style.css";
 
 type ChatMessage = {
@@ -12,6 +12,7 @@ export function AiChat() {
     const [input, setInput] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const messagesRef = useRef<HTMLDivElement | null>(null);
 
     const canSend = useMemo(() => input.trim().length > 0 && !isSending, [input, isSending]);
 
@@ -29,6 +30,14 @@ export function AiChat() {
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [isOpen]);
+
+    useEffect(() => {
+        if (!messagesRef.current) {
+            return;
+        }
+
+        messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+    }, [messages, isSending, isOpen]);
 
     const handleSend = async () => {
         const text = input.trim();
@@ -59,6 +68,13 @@ export function AiChat() {
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         await handleSend();
+    };
+
+    const handleInputKeyDown = (event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            void handleSend();
+        }
     };
 
     return (
@@ -94,7 +110,7 @@ export function AiChat() {
                             <video className="ai-chat-modal-avatar-video" autoPlay loop muted playsInline src="/bot.webm" />
                         </div>
 
-                        <div className="ai-chat-messages">
+                        <div className="ai-chat-messages" ref={messagesRef}>
                             {messages.length === 0 && (
                                 <p className="ai-chat-empty-message">
                                     I&apos;m just a program, but I&apos;m here and ready to help. How can I assist you today?
@@ -110,7 +126,7 @@ export function AiChat() {
                                 </div>
                             ))}
 
-                            {isSending && <div className="ai-chat-message ai-chat-message-assistant">Thinking…</div>}
+                            {isSending && <div className="ai-chat-message ai-chat-message-assistant">Assisting…</div>}
                         </div>
 
                         <form className="ai-chat-input-shell" onSubmit={handleSubmit}>
@@ -121,6 +137,7 @@ export function AiChat() {
                                 aria-label="AI chat message"
                                 value={input}
                                 onChange={(event) => setInput(event.target.value)}
+                                onKeyDown={handleInputKeyDown}
                             />
 
                             <div className="ai-chat-actions">
