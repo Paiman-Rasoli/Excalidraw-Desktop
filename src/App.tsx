@@ -28,7 +28,7 @@ function App() {
           if (libraryItems.length > 0) {
             excalidrawAPI.updateLibrary({
               libraryItems,
-              openLibraryMenu: true,
+              openLibraryMenu: false,
             });
           }
         }
