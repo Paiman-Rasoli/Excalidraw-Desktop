@@ -2,13 +2,67 @@ import { invoke } from "@tauri-apps/api/core";
 import { FormEvent, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Config } from "./config";
 import "./style.css";
+import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
+import { ImportedDataState } from "@excalidraw/excalidraw/data/types";
 
 type ChatMessage = {
     role: "user" | "assistant";
     text: string;
 };
 
-export function AiChat() {
+type AiChatResponse = {
+    shortDescription: string;
+    elements: ImportedDataState["elements"];
+};
+
+const EXCALIDRAW_ELEMENTS_SHORT_GUIDE = JSON.stringify(
+    {
+        targetType: 'ImportedDataState["elements"]',
+        requiredBaseFields: [
+            "id",
+            "type",
+            "x",
+            "y",
+            "width",
+            "height",
+            "angle",
+            "strokeColor",
+            "backgroundColor",
+            "fillStyle",
+            "strokeWidth",
+            "strokeStyle",
+            "roundness",
+            "roughness",
+            "opacity",
+            "groupIds",
+            "seed",
+            "version",
+            "versionNonce",
+            "isDeleted",
+            "boundElements",
+            "updated",
+            "link",
+            "locked",
+        ],
+        typeSpecific: {
+            rectangle: [],
+            ellipse: [],
+            diamond: [],
+            line: ["points", "lastCommittedPoint"],
+            arrow: ["points", "startBinding", "endBinding", "startArrowhead", "endArrowhead"],
+            text: ["text", "fontSize", "fontFamily", "textAlign", "verticalAlign", "baseline", "containerId", "lineHeight"],
+        },
+        notes: [
+            "Return a JSON array only for elements field.",
+            "All numeric fields must be numbers, not strings.",
+            "Use plausible defaults when unsure.",
+        ],
+    },
+    null,
+    0,
+);
+
+export function AiChat({excalidrawAPI} : { excalidrawAPI: ExcalidrawImperativeAPI }) {
     const [isOpen, setIsOpen] = useState(false);
     const [activeView, setActiveView] = useState<"chat" | "config">("chat");
     const [input, setInput] = useState("");
@@ -48,13 +102,27 @@ export function AiChat() {
             return;
         }
 
+        const lastMessages: ChatMessage[] = [
+            ...messages.slice(-6),
+            { role: "user", text },
+        ];
+
         setMessages((prev) => [...prev, { role: "user", text }]);
         setInput("");
         setIsSending(true);
 
         try {
-            const response = await invoke<string>("send_ai_message", { message: text });
-            setMessages((prev) => [...prev, { role: "assistant", text: response }]);
+            const response = await invoke<AiChatResponse>("send_ai_message", {
+                message: text,
+                elementsGuide: EXCALIDRAW_ELEMENTS_SHORT_GUIDE,
+                lastMessages,
+            });
+            setMessages((prev) => [...prev, { role: "assistant", text: response.shortDescription }]);
+
+            if (response?.elements && Array.isArray(response?.elements)) {
+                excalidrawAPI.updateScene({ elements: response.elements , captureUpdate : "IMMEDIATELY" });
+            }
+
         } catch (error) {
             setMessages((prev) => [
                 ...prev,

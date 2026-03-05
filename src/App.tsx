@@ -91,7 +91,7 @@ function App() {
           </Footer>
         </Excalidraw>
 
-        <AiChat />
+        <AiChat excalidrawAPI={excalidrawAPI as ExcalidrawImperativeAPI} />
       </Suspense>
     </main>
   );
