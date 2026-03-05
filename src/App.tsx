@@ -5,6 +5,7 @@ import { Footer } from "@excalidraw/excalidraw";
 import { invoke } from "@tauri-apps/api/core";
 import { LibraryModal } from "./components/library-modal";
 import { ExcalidrawImperativeAPI, LibraryItems } from "@excalidraw/excalidraw/types";
+import { AiChat } from "./components/ai-chat";
 
 const Excalidraw = lazy(() =>
   import("@excalidraw/excalidraw").then((module) => ({
@@ -89,6 +90,8 @@ function App() {
             </button>
           </Footer>
         </Excalidraw>
+
+        <AiChat />
       </Suspense>
     </main>
   );
