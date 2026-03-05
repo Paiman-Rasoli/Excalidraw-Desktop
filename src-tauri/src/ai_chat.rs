@@ -97,7 +97,7 @@ fn build_drawing_prompt(
     let guide_block = elements_guide.unwrap_or(
         "{\"targetType\":\"ImportedDataState[\\\"elements\\\"]\",\"note\":\"Return valid Excalidraw elements objects only.\"}",
     );
-
+    
     let history_block = last_messages
         .map(|messages| {
             if messages.is_empty() {
@@ -113,15 +113,48 @@ fn build_drawing_prompt(
         .unwrap_or_else(|| "No previous conversation context.".to_string());
 
     format!(
-        "You are an AI Agent for Excalidraw. Understand what drawing the user wants and produce only valid JSON matching the schema.\n\
-        Rules:\n\
-        1) shortDescription: one short sentence describing what you created.\n\
-        2) elements: an array of Excalidraw element objects.\n\
-        3) elements must be directly usable by Excalidraw and compatible with ImportedDataState[\"elements\"].\n\
-        4) If request is unclear, still return a simple helpful diagram with a valid elements array.\n\
-        5) Follow this compact element guide JSON:\n{guide_block}\n\
-        6) Use this recent chat context when forming your response:\n{history_block}\n\
-        User request: {user_prompt}"
+        "You are an AI agent that converts a user request into a valid Excalidraw diagram.
+Your job:
+Understand the user's intent and construct a clear diagram that visually represents the idea.
+
+Output must be valid JSON matching the schema.
+
+Rules:
+
+1) shortDescription
+Provide a concise but informative description (1–2 sentences) explaining the diagram and its purpose.
+
+2) Diagram planning
+Before creating elements, determine:
+- the main objects in the diagram
+- how they relate
+- the simplest visual structure to represent them.
+
+Prefer simple diagrams that are easy to understand.
+
+3) Layout rules
+- Maintain spacing between shapes.
+- Connect related elements using arrows or lines.
+
+4) Elements
+elements must be directly usable by Excalidraw and compatible with ImportedDataState[\"elements\"].
+
+5) Diagram clarity
+- Use rectangles for concepts/components
+- Use arrows for relationships or flow
+- Use text elements when labels are needed
+
+6) If the request is unclear
+Still return a helpful simple diagram representing a possible interpretation.
+
+7) Follow this compact element guide JSON:
+{guide_block}
+
+8) Use this recent chat context when forming your response:
+{history_block}
+
+User request:
+{user_prompt}"
     )
 }
 
@@ -253,9 +286,5 @@ pub async fn send_ai_message(
     let prompt = build_drawing_prompt(trimmed, elements_guide.as_deref(), last_messages.as_deref());
     let response = generate_structured_output(&selected_provider, &prompt).await?;
 
-    println!(
-        "AI response from provider '{}': {:?}",
-        selected_provider, response
-    );
     Ok(response)
 }
