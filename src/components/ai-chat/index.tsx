@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { FormEvent, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Config } from "./config";
 import "./style.css";
 
 type ChatMessage = {
@@ -9,6 +10,7 @@ type ChatMessage = {
 
 export function AiChat() {
     const [isOpen, setIsOpen] = useState(false);
+    const [activeView, setActiveView] = useState<"chat" | "config">("chat");
     const [input, setInput] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -24,6 +26,7 @@ export function AiChat() {
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
                 setIsOpen(false);
+                setActiveView("chat");
             }
         };
 
@@ -77,6 +80,11 @@ export function AiChat() {
         }
     };
 
+    const handleClose = () => {
+        setIsOpen(false);
+        setActiveView("chat");
+    };
+
     return (
         <div className="ai-chat-root">
             <button
@@ -91,69 +99,87 @@ export function AiChat() {
             {isOpen && (
                 <div
                     className="ai-chat-overlay"
-                    onClick={() => setIsOpen(false)}
+                    onClick={handleClose}
                     role="dialog"
                     aria-modal="true"
                     aria-label="AI chat"
                 >
                     <div className="ai-chat-modal" onClick={(event) => event.stopPropagation()}>
-                        <button
-                            type="button"
-                            className="ai-chat-close"
-                            onClick={() => setIsOpen(false)}
-                            aria-label="Close AI chat"
-                        >
-                            ×
-                        </button>
+
+                        <div className="ai-chat-header-actions">
+                            <button
+                                type="button"
+                                className={`ai-chat-header-button ${activeView === "config" ? "is-active" : ""}`}
+                                onClick={() => setActiveView((prev) => (prev === "chat" ? "config" : "chat"))}
+                                aria-label="Toggle provider config"
+                            >
+                                ⚙
+                            </button>
+
+                            <button
+                                type="button"
+                                className="ai-chat-close"
+                                onClick={handleClose}
+                                aria-label="Close AI chat"
+                            >
+                                ×
+                            </button>
+                        </div>
 
                         <div className="ai-chat-modal-avatar">
                             <video className="ai-chat-modal-avatar-video" autoPlay loop muted playsInline src="/bot.webm" />
                         </div>
 
-                        <div className="ai-chat-messages" ref={messagesRef}>
-                            {messages.length === 0 && (
-                                <p className="ai-chat-empty-message">
-                                    I&apos;m just a program, but I&apos;m here and ready to help. How can I assist you today?
-                                </p>
-                            )}
+                        {activeView === "config" ? (
+                            <Config onSaved={() => setActiveView("chat")} />
+                        ) : (
+                            <>
+                                <div className="ai-chat-messages" ref={messagesRef}>
+                                    {messages.length === 0 && (
+                                        <p className="ai-chat-empty-message">
+                                            I&apos;m just a program, but I&apos;m here and ready to help. How can I assist you today?
+                                        </p>
+                                    )}
 
-                            {messages.map((message, index) => (
-                                <div
-                                    key={`${message.role}-${index}`}
-                                    className={`ai-chat-message ai-chat-message-${message.role}`}
-                                >
-                                    {message.text}
+                                    {messages.map((message, index) => (
+                                        <div
+                                            key={`${message.role}-${index}`}
+                                            className={`ai-chat-message ai-chat-message-${message.role}`}
+                                        >
+                                            {message.text}
+                                        </div>
+                                    ))}
+
+                                    {isSending && <div className="ai-chat-message ai-chat-message-assistant">Assisting…</div>}
                                 </div>
-                            ))}
 
-                            {isSending && <div className="ai-chat-message ai-chat-message-assistant">Assisting…</div>}
-                        </div>
+                                <form className="ai-chat-input-shell" onSubmit={handleSubmit}>
+                                    <textarea
+                                        className="ai-chat-input"
+                                        placeholder="Ask anything"
+                                        rows={3}
+                                        aria-label="AI chat message"
+                                        value={input}
+                                        onChange={(event) => setInput(event.target.value)}
+                                        onKeyDown={handleInputKeyDown}
+                                    />
 
-                        <form className="ai-chat-input-shell" onSubmit={handleSubmit}>
-                            <textarea
-                                className="ai-chat-input"
-                                placeholder="Ask anything"
-                                rows={3}
-                                aria-label="AI chat message"
-                                value={input}
-                                onChange={(event) => setInput(event.target.value)}
-                                onKeyDown={handleInputKeyDown}
-                            />
-
-                            <div className="ai-chat-actions">
-                                <button type="button" className="ai-chat-action-button" aria-label="Attach file">
-                                    📎
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="ai-chat-send-button"
-                                    aria-label="Send message"
-                                    disabled={!canSend}
-                                >
-                                    ↑
-                                </button>
-                            </div>
-                        </form>
+                                    <div className="ai-chat-actions">
+                                        <button type="button" className="ai-chat-action-button" aria-label="Attach file">
+                                            📎
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="ai-chat-send-button"
+                                            aria-label="Send message"
+                                            disabled={!canSend}
+                                        >
+                                            ↑
+                                        </button>
+                                    </div>
+                                </form>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

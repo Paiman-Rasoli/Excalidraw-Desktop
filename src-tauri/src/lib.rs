@@ -55,6 +55,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             save_library_items,
             load_library_items,
+            ai_chat::save_ai_chat_config,
+            ai_chat::load_ai_chat_config,
             ai_chat::send_ai_message
         ])
         .run(tauri::generate_context!())
