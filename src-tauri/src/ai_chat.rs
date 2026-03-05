@@ -43,6 +43,37 @@ fn ai_chat_config_file_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(app_data_dir.join(AI_CHAT_CONFIG_FILE_NAME))
 }
 
+fn provider_key(config: &ProviderKeys, provider: &str) -> Option<String> {
+    let value = match provider {
+        "openai" => &config.openai,
+        "anthropic" => &config.anthropic,
+        "google" => &config.google,
+        _ => return None,
+    };
+
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
+    }
+}
+
+fn pick_provider_and_key(config: &ProviderKeys) -> Option<(String, String)> {
+    let preferred = config.default_agent.trim().to_lowercase();
+    if let Some(key) = provider_key(config, &preferred) {
+        return Some((preferred, key));
+    }
+
+    for provider in ["openai", "anthropic", "google"] {
+        if let Some(key) = provider_key(config, provider) {
+            return Some((provider.to_string(), key));
+        }
+    }
+
+    None
+}
+
 #[tauri::command]
 pub fn save_ai_chat_config(app: tauri::AppHandle, config: ProviderKeys) -> Result<(), String> {
     let file_path = ai_chat_config_file_path(&app)?;
@@ -72,12 +103,33 @@ pub fn load_ai_chat_config(app: tauri::AppHandle) -> Result<ProviderKeys, String
 }
 
 #[tauri::command]
-pub async fn send_ai_message(message: String) -> Result<String, String> {
+pub async fn send_ai_message(app: tauri::AppHandle, message: String) -> Result<String, String> {
     let trimmed = message.trim();
     if trimmed.is_empty() {
         return Err("Message cannot be empty".to_string());
     }
 
+    let config = load_ai_chat_config(app).unwrap_or_default();
+
+    let (selected_provider, selected_value) = match pick_provider_and_key(&config) {
+        Some(selection) => selection,
+        None => {
+            return Ok(
+                "Please open the top gear icon and set at least one AI provider key (OpenAI, Anthropic, or Google), then try again."
+                    .to_string(),
+            )
+        }
+    };
+
+    if selected_value.is_empty() {
+        return Ok(
+            "Please open the top gear icon and set at least one AI provider key (OpenAI, Anthropic, or Google), then try again."
+                .to_string(),
+        );
+    }
+
     sleep(Duration::from_secs(4)).await;
-    Ok("It seems like your message might have been a typo. Could you please clarify or let me know how I can assist you?".to_string())
+    Ok(format!(
+        "Provider selected: {selected_provider}. I received your message and I am ready for the next step."
+    ))
 }
