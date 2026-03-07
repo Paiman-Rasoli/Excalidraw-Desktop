@@ -1,3 +1,5 @@
+mod ai_chat;
+
 use serde_json::Value;
 use std::fs;
 use std::path::PathBuf;
@@ -50,7 +52,13 @@ fn load_library_items(app: tauri::AppHandle) -> Result<Vec<Value>, String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-    .invoke_handler(tauri::generate_handler![save_library_items, load_library_items])
+        .invoke_handler(tauri::generate_handler![
+            save_library_items,
+            load_library_items,
+            ai_chat::save_ai_chat_config,
+            ai_chat::load_ai_chat_config,
+            ai_chat::send_ai_message
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
