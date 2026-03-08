@@ -60,6 +60,6 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "Excalidraw Desktop v__VERSION__"
           releaseBody: "See the assets below to download and install Excalidraw Desktop for your platform."
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
