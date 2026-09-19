@@ -17,6 +17,12 @@ type ConfigProps = {
     onSaved: () => void;
 };
 
+type McpStatus = {
+    listening: boolean;
+    url: string;
+    error: string | null;
+};
+
 const DEFAULT_CONFIG: AiChatConfig = {
     openai: "",
     anthropic: "",
@@ -27,6 +33,24 @@ const DEFAULT_CONFIG: AiChatConfig = {
 export function Config({ onSaved }: ConfigProps) {
     const [config, setConfig] = useState<AiChatConfig>(DEFAULT_CONFIG);
     const [isSaving, setIsSaving] = useState(false);
+    const [mcp, setMcp] = useState<McpStatus | null>(null);
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        invoke<McpStatus>("mcp_status")
+            .then(setMcp)
+            .catch(() => setMcp(null));
+    }, []);
+
+    const mcpCommand = mcp
+        ? `claude mcp add --transport http excalidraw ${mcp.url}`
+        : "";
+
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(mcpCommand);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+    };
 
     useEffect(() => {
         const loadConfig = async () => {
@@ -125,6 +149,44 @@ export function Config({ onSaved }: ConfigProps) {
             <button type="submit" className="ai-chat-config-save" disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save Config"}
             </button>
+
+            {mcp && (
+                <section className="ai-chat-mcp-section">
+                    <h3 className="ai-chat-config-title">MCP Server</h3>
+
+                    <div className="ai-chat-mcp-status">
+                        <span
+                            className="ai-chat-mcp-dot"
+                            data-listening={mcp.listening}
+                            aria-hidden="true"
+                        />
+                        <span>{mcp.listening ? "Listening" : "Not running"}</span>
+                    </div>
+
+                    {mcp.error && <p className="ai-chat-mcp-error">{mcp.error}</p>}
+
+                    {mcp.listening && (
+                        <>
+                            <div className="ai-chat-mcp-endpoint">
+                                <code>{mcp.url}</code>
+                                <button
+                                    type="button"
+                                    className="ai-chat-mcp-copy"
+                                    onClick={handleCopy}
+                                >
+                                    {copied ? "Copied" : "Copy command"}
+                                </button>
+                            </div>
+                            <p className="ai-chat-mcp-note">
+                                External AI agents can read and draw on this canvas. The
+                                server listens on localhost only and requires no
+                                password, so any program running on this computer can
+                                use it. Close the app to stop it.
+                            </p>
+                        </>
+                    )}
+                </section>
+            )}
         </form>
     );
 }

@@ -1,4 +1,5 @@
 mod ai_chat;
+mod mcp;
 
 use serde_json::Value;
 use std::fs;
@@ -52,12 +53,22 @@ fn load_library_items(app: tauri::AppHandle) -> Result<Vec<Value>, String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        // `.manage` must precede `.setup`: `mcp::start` reads McpStatus out of state.
+        .manage(std::sync::Arc::new(mcp::bridge::Bridge::new()))
+        .manage(mcp::McpStatus::default())
+        .setup(|app| {
+            mcp::start(app.handle());
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             save_library_items,
             load_library_items,
             ai_chat::save_ai_chat_config,
             ai_chat::load_ai_chat_config,
-            ai_chat::send_ai_message
+            ai_chat::send_ai_message,
+            mcp::mcp_status,
+            mcp::bridge::mcp_bridge_register,
+            mcp::bridge::mcp_bridge_reply
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

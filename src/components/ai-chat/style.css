@@ -313,3 +313,77 @@
 		font-size: 20px;
 	}
 }
+
+.ai-chat-mcp-section {
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
+	margin-top: 4px;
+	padding-top: 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.ai-chat-mcp-status {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	color: rgba(255, 255, 255, 0.78);
+}
+
+.ai-chat-mcp-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex: none;
+	background: #f87171;
+}
+
+.ai-chat-mcp-dot[data-listening="true"] {
+	background: #4ade80;
+}
+
+.ai-chat-mcp-endpoint {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.ai-chat-mcp-endpoint code {
+	flex: 1;
+	overflow-x: auto;
+	white-space: nowrap;
+	font-size: 11px;
+	padding: 6px 8px;
+	border-radius: 8px;
+	background: rgba(0, 0, 0, 0.25);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	color: #f4f4f5;
+}
+
+.ai-chat-mcp-copy {
+	flex: none;
+	font-size: 11px;
+	padding: 6px 10px;
+	border-radius: 8px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(255, 255, 255, 0.06);
+	color: #f4f4f5;
+	cursor: pointer;
+}
+
+.ai-chat-mcp-copy:hover {
+	background: rgba(255, 255, 255, 0.12);
+}
+
+.ai-chat-mcp-note {
+	font-size: 11px;
+	line-height: 1.45;
+	color: rgba(255, 255, 255, 0.55);
+}
+
+.ai-chat-mcp-error {
+	font-size: 11px;
+	line-height: 1.45;
+	color: #fca5a5;
+}

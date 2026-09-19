@@ -6,6 +6,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { LibraryModal } from "./components/library-modal";
 import { ExcalidrawImperativeAPI, LibraryItems } from "@excalidraw/excalidraw/types";
 import { AiChat } from "./components/ai-chat";
+import { setExcalidrawAPI, setLibraryItems } from "./lib/excalidraw-handle";
+import { installMcpBridge } from "./lib/mcp-bridge";
 
 const Excalidraw = lazy(() =>
   import("@excalidraw/excalidraw").then((module) => ({
@@ -15,7 +17,7 @@ const Excalidraw = lazy(() =>
 
 function App() {
   const [isLibraryModalOpen, setIsLibraryModalOpen] = useState(false);
-  const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
+  const [excalidrawAPI, setExcalidrawApiState] = useState<ExcalidrawImperativeAPI | null>(null);
   const libraryUrl = "https://libraries.excalidraw.com/";
 
   useEffect(() => {
@@ -24,6 +26,7 @@ function App() {
         const libraryItems = await invoke<LibraryItems>("load_library_items");
 
         if (Array.isArray(libraryItems) && excalidrawAPI) {
+          setLibraryItems(libraryItems);
 
           if (libraryItems.length > 0) {
             excalidrawAPI.updateLibrary({
@@ -43,7 +46,22 @@ function App() {
     }
   }, [excalidrawAPI]);
 
+  // Registering the channel is also how Rust learns the canvas is live, so
+  // this must wait until excalidrawAPI exists.
+  useEffect(() => {
+    if (!excalidrawAPI) {
+      return;
+    }
+    installMcpBridge().catch((error) => {
+      console.error("Failed to register the MCP bridge", error);
+    });
+  }, [excalidrawAPI]);
+
   const handleLibraryChange = async (items: LibraryItems) => {
+    // Keep the MCP tools' view of the library current without waiting for the
+    // write below to land.
+    setLibraryItems(items);
+
     try {
       await invoke("save_library_items", { items: [...items] });
     } catch (error) {
@@ -68,7 +86,10 @@ function App() {
         }
       >
         <Excalidraw
-          excalidrawAPI={(api) => setExcalidrawAPI(api)}
+          excalidrawAPI={(api) => {
+            setExcalidrawApiState(api);
+            setExcalidrawAPI(api);
+          }}
           onLibraryChange={(items) => {
             handleLibraryChange(items);
           }}
@@ -91,7 +112,7 @@ function App() {
           </Footer>
         </Excalidraw>
 
-        <AiChat excalidrawAPI={excalidrawAPI as ExcalidrawImperativeAPI} />
+        {excalidrawAPI && <AiChat excalidrawAPI={excalidrawAPI} />}
       </Suspense>
     </main>
   );

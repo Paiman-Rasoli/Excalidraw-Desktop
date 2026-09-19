@@ -22,7 +22,20 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tokio = { version = "1", features = ["time"] }
+# `net` for the MCP TcpListener, `sync` for the bridge's oneshot/watch channels.
+# These currently arrive transitively via reqwest/tauri; declaring them keeps the
+# build honest if aisdk is ever dropped.
+tokio = { version = "1", features = ["time", "net", "sync", "rt"] }
 aisdk = {version = "0.5.2", features = ["openai", "anthropic", "google"] }
-openssl = { version = "0.10", features = ["vendored"] }
 schemars = "1"
+
+# MCP server. `transport-streamable-http-server` transitively enables
+# `transport-streamable-http-server-session`, `server-side-http` and `tower`.
+rmcp = { version = "3.4", features = ["transport-streamable-http-server"] }
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
+
+# Linux uses OpenSSL via native-tls; vendor it so builds don't depend on the
+# host's libssl. Windows uses schannel and macOS Security.framework, so the
+# crate (and its perl/nasm-based source build) is not needed there.
+[target.'cfg(target_os = "linux")'.dependencies]
+openssl = { version = "0.10", features = ["vendored"] }
