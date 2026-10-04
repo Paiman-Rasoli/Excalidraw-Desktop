@@ -7,7 +7,24 @@ on:
   pull_request:
     branches:
       - main
+    # Only build PRs that change the app or its build setup.
+    paths:
+      - "src/**"
+      - "src-tauri/**"
+      - "public/**"
+      - "index.html"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "vite.config.ts"
+      - "tsconfig*.json"
+      - ".github/workflows/release.yml"
   workflow_dispatch:
+
+# A new push to the same PR cancels its previous, now outdated build.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   release:
