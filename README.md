@@ -94,6 +94,14 @@ the server.
 
 You can find pre-built desktop versions for your OS in the repository's **Releases** page.
 
+### Publishing a release (maintainers)
+
+```bash
+scripts/release.sh bump patch   # or minor, major, or an exact X.Y.Z; opens a version-bump PR
+# merge the PR, then:
+scripts/release.sh tag          # pushes vX.Y.Z; CI builds every platform and publishes the release
+```
+
 ## Project structure
 
 - `src/`: React frontend
